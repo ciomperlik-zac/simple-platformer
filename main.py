@@ -7,6 +7,10 @@ clock = pygame.time.Clock()
 
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
+GRAY = (128, 128, 128, 255)
+GREEN = (0, 255, 0, 255)
+
+players_alive = 2
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, loc, color):
@@ -23,14 +27,32 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.loc)
 
         self.jumping = 0
-    
-    def gravity(self):
-        collide = pygame.sprite.spritecollide(self, platforms, False)
 
-        if not collide:
+    def die(self):
+        global players_alive
+
+        self.kill()
+        players_alive -= 1
+
+        disp.set_text(f"Player {"RED" if self.color == RED else "BLUE"} died!")
+    
+    def gravity_collide(self):
+        collide_plat = pygame.sprite.spritecollide(self, platforms, False)
+        collide_enemy = pygame.sprite.spritecollide(self, enemies, False)
+
+        if not collide_plat:
             self.rect.centery += 0.5
         else:
+            self.rect.centerx += collide_plat[0].vx
+            self.rect.centery += collide_plat[0].vy
+
             self.jumping = 0
+
+            if collide_plat[0].color not in [self.color, GRAY]:
+                self.die()
+
+        if len(collide_enemy) > 0 or self.rect.top > 600:
+            self.die()
 
     def move_left(self):
         self.rect.centerx -= 1
@@ -45,7 +67,7 @@ class Player(pygame.sprite.Sprite):
         self.jumping += 1
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, loc, vx, vy, color):
+    def __init__(self, loc, vx, vy, vxl, vyl, color):
         super(Platform, self).__init__()
 
         self.loc = loc
@@ -55,31 +77,104 @@ class Platform(pygame.sprite.Sprite):
         self.vx = vx
         self.vy = vy
 
-        self.image = pygame.Surface((200, 10), pygame.SRCALPHA)
+        self.vxl = vxl
+        self.vyl = vyl
+
+        self.image = pygame.Surface((150, 10), pygame.SRCALPHA)
         self.image.fill(color)
         self.rect = self.image.get_rect(center=self.loc)
 
     def move(self):
-        if self.rect.left < 0:
+        if self.rect.left < self.vxl[0]:
             self.vx = abs(self.vx)
-        elif self.rect.right > 800:
+        elif self.rect.right > self.vxl[1]:
             self.vx = -abs(self.vx)
 
+        if self.rect.top < self.vyl[0]:
+            self.vy = abs(self.vy)
+        elif self.rect.bottom > self.vyl[1]:
+            self.vy = -abs(self.vy)
+
         self.rect.centerx += self.vx
-        self.rect.centerx += self.vy
+        self.rect.centery += self.vy
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, loc, vx, vy, vxl, vyl, color):
+        super(Enemy, self).__init__()
+
+        self.loc = loc
+
+        self.color = color
+
+        self.vx = vx
+        self.vy = vy
+
+        self.vxl = vxl
+        self.vyl = vyl
+
+        self.image = pygame.Surface((20, 20), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, self.color, (10, 10), 10)
+        self.rect = self.image.get_rect(center=self.loc)
+
+    def move(self):
+        if self.rect.left < self.vxl[0]:
+            self.vx = abs(self.vx)
+        elif self.rect.right > self.vxl[1]:
+            self.vx = -abs(self.vx)
+
+        if self.rect.top < self.vyl[0]:
+            self.vy = abs(self.vy)
+        elif self.rect.bottom > self.vyl[1]:
+            self.vy = -abs(self.vy)
+
+        self.rect.centerx += self.vx
+        self.rect.centery += self.vy
+
+class TextScreen():
+    def __init__(self, text):
+        super(TextScreen, self).__init__()
+
+        self.text = text
+
+        self.font = pygame.font.SysFont("Comic Sans MS", 50)
+
+        self.image = self.font.render(self.text, False, (255, 255, 255))
+
+        self.size = self.font.size(self.text)
+
+    def set_text(self, text):
+        self.text = text
+
+        self.font = pygame.font.SysFont("Comic Sans MS", 50)
+
+        self.image = self.font.render(self.text, False, (255, 255, 255))
+
+        self.size = self.font.size(self.text)
 
 players = pygame.sprite.Group()
-player1 = Player((295, 450), RED)
+player1 = Player((300, 400), RED)
 players.add(player1)
-player2 = Player((505, 400), BLUE)
+player2 = Player((500, 450), BLUE)
 players.add(player2)
 
 platforms = pygame.sprite.Group()
-platforms.add(Platform((295, 500), 0, 0, RED))
-platforms.add(Platform((505, 450), 0, 0, BLUE))
+platforms.add(Platform((300, 450), 0, 0, [0, 0], [0, 0], RED))
+platforms.add(Platform((500, 500), 0, 0, [0, 0], [0, 0], BLUE))
 
-platforms.add(Platform((195, 400), 1, 0, RED))
-platforms.add(Platform((605, 350), -1, 0, BLUE))
+platforms.add(Platform((125, 450), 0, 1, [0, 0], [350, 450], RED))
+platforms.add(Platform((675, 500), 0, 1, [0, 0], [400, 500], BLUE))
+
+platforms.add(Platform((300, 300), 0, 0, [0, 0], [0, 0], GRAY))
+platforms.add(Platform((500, 350), 0, 0, [0, 0], [0, 0], GRAY))
+
+platforms.add(Platform((225, 200), 1, 0, [50, 375], [0, 0], RED))
+platforms.add(Platform((575, 250), 1, 0, [450, 750], [0, 0], BLUE))
+
+enemies = pygame.sprite.Group()
+enemies.add(Enemy((300, 285), 1, 1, [225, 375], [255, 295], GREEN))
+enemies.add(Enemy((500, 285), -1, 1, [425, 575], [305, 345], GREEN))
+
+disp = TextScreen("")
 
 running = True
 while running:
@@ -132,13 +227,24 @@ while running:
         if p.key_inf[2] == 1:
             p.jump()
 
-        p.gravity()
+        p.gravity_collide()
 
     for p in platforms:
         p.move()
 
+    for e in enemies:
+        e.move()
+
     players.draw(screen)
     platforms.draw(screen)
+    enemies.draw(screen)
+
+    if players_alive == 0:
+        disp.set_text("GAMEOVER!")
+
+        players_alive = -1
+
+    screen.blit(disp.image, ((400)-(disp.size[0]/2), 10))
 
     pygame.display.flip()
     clock.tick(60)
