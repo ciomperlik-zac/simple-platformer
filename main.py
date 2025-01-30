@@ -168,7 +168,7 @@ platforms.add(Platform((300, 300), 0, 0, [0, 0], [0, 0], GRAY))
 platforms.add(Platform((500, 350), 0, 0, [0, 0], [0, 0], GRAY))
 
 platforms.add(Platform((225, 200), 1, 0, [50, 375], [0, 0], RED))
-platforms.add(Platform((575, 250), 1, 0, [450, 750], [0, 0], BLUE))
+platforms.add(Platform((575, 250), 1, 0, [425, 750], [0, 0], BLUE))
 
 enemies = pygame.sprite.Group()
 enemies.add(Enemy((300, 285), 1, 1, [225, 375], [255, 295], GREEN))
