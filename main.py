@@ -162,7 +162,7 @@ class TextScreen():
 players = pygame.sprite.Group()
 player1 = Player((300, 400), RED)
 players.add(player1)
-player2 = Player((500, 450), BLUE)
+player2 = Player((500, 400), BLUE)
 players.add(player2)
 
 platforms = pygame.sprite.Group()
