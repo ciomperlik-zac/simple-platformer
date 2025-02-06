@@ -29,7 +29,7 @@ class Player(pygame.sprite.Sprite):
         self.image.fill(color)
         self.rect = self.image.get_rect(center=self.loc)
 
-        self.jumping = 0
+        self.jumping = 1000
 
     def die(self):
         global players_alive
@@ -229,22 +229,21 @@ while running:
                 player2.key_inf[2] = 0
                 player2.jumping = 1000
 
-    if players_alive == 2:
-        for p in players:
-            if p.key_inf[0] == 1:
-                p.move_left()
-            if p.key_inf[1] == 1:
-                p.move_right()
-            if p.key_inf[2] == 1:
-                p.jump()
+    for p in players:
+        if p.key_inf[0] == 1:
+            p.move_left()
+        if p.key_inf[1] == 1:
+            p.move_right()
+        if p.key_inf[2] == 1:
+            p.jump()
 
-            p.gravity_collide()
+        p.gravity_collide()
 
-        for p in platforms:
-            p.move()
+    for p in platforms:
+        p.move()
 
-        for e in enemies:
-            e.move()
+    for e in enemies:
+        e.move()
 
     screen.blit(bg, (0,0))
 
