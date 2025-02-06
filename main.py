@@ -5,10 +5,13 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
+bg = pygame.image.load("bg.png")
+
 RED = (255, 0, 0, 255)
 BLUE = (0, 0, 255, 255)
 GRAY = (128, 128, 128, 255)
-GREEN = (0, 255, 0, 255)
+GREEN = (0, 200, 0, 255)
+GOLD = (255, 215, 0, 255)
 
 players_alive = 2
 
@@ -34,7 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.kill()
         players_alive -= 1
 
-        disp.set_text(f"Player {"RED" if self.color == RED else "BLUE"} died!")
+        disp.set_text(f"Player {"BLUE" if self.color == RED else "RED"} won!")
     
     def gravity_collide(self):
         collide_plat = pygame.sprite.spritecollide(self, platforms, False)
@@ -48,8 +51,13 @@ class Player(pygame.sprite.Sprite):
 
             self.jumping = 0
 
-            if collide_plat[0].color not in [self.color, GRAY]:
+            if collide_plat[0].color not in [self.color, GRAY, GOLD]:
                 self.die()
+
+            if collide_plat[0].color == GOLD:
+                for player in players:
+                    if player.color != self.color:
+                        player.die()
 
         if len(collide_enemy) > 0 or self.rect.top > 600:
             self.die()
@@ -158,20 +166,22 @@ player2 = Player((500, 450), BLUE)
 players.add(player2)
 
 platforms = pygame.sprite.Group()
-platforms.add(Platform((300, 450), 0, 0, [0, 0], [0, 0], RED))
+platforms.add(Platform((300, 500), 0, 0, [0, 0], [0, 0], RED))
 platforms.add(Platform((500, 500), 0, 0, [0, 0], [0, 0], BLUE))
 
-platforms.add(Platform((125, 450), 0, 1, [0, 0], [350, 450], RED))
-platforms.add(Platform((675, 500), 0, 1, [0, 0], [400, 500], BLUE))
+platforms.add(Platform((125, 450), 0, 1, [0, 0], [350, 500], RED))
+platforms.add(Platform((675, 450), 0, 1, [0, 0], [350, 500], BLUE))
 
-platforms.add(Platform((300, 300), 0, 0, [0, 0], [0, 0], GRAY))
+platforms.add(Platform((300, 350), 0, 0, [0, 0], [0, 0], GRAY))
 platforms.add(Platform((500, 350), 0, 0, [0, 0], [0, 0], GRAY))
 
-platforms.add(Platform((225, 200), 1, 0, [50, 375], [0, 0], RED))
-platforms.add(Platform((575, 250), 1, 0, [425, 750], [0, 0], BLUE))
+platforms.add(Platform((225, 225), 1, 0, [50, 375], [0, 0], BLUE))
+platforms.add(Platform((575, 225), 1, 0, [425, 750], [0, 0], RED))
+
+platforms.add(Platform((400, 100), 0, 0, [0, 0], [0, 0], GOLD))
 
 enemies = pygame.sprite.Group()
-enemies.add(Enemy((300, 285), 1, 1, [225, 375], [255, 295], GREEN))
+enemies.add(Enemy((300, 285), 1, 1, [225, 375], [305, 345], GREEN))
 enemies.add(Enemy((500, 285), -1, 1, [425, 575], [305, 345], GREEN))
 
 disp = TextScreen("")
@@ -208,7 +218,7 @@ while running:
                 player1.key_inf[1] = 0
             elif event.key == pygame.K_w:
                 player1.key_inf[2] = 0
-                player1.jumping = 100
+                player1.jumping = 1000
 
             # Player 2 Controls
             if event.key == pygame.K_LEFT:
@@ -217,32 +227,30 @@ while running:
                 player2.key_inf[1] = 0
             elif event.key == pygame.K_UP:
                 player2.key_inf[2] = 0
-                player2.jumping = 100
+                player2.jumping = 1000
 
-    for p in players:
-        if p.key_inf[0] == 1:
-            p.move_left()
-        if p.key_inf[1] == 1:
-            p.move_right()
-        if p.key_inf[2] == 1:
-            p.jump()
+    if players_alive == 2:
+        for p in players:
+            if p.key_inf[0] == 1:
+                p.move_left()
+            if p.key_inf[1] == 1:
+                p.move_right()
+            if p.key_inf[2] == 1:
+                p.jump()
 
-        p.gravity_collide()
+            p.gravity_collide()
 
-    for p in platforms:
-        p.move()
+        for p in platforms:
+            p.move()
 
-    for e in enemies:
-        e.move()
+        for e in enemies:
+            e.move()
+
+    screen.blit(bg, (0,0))
 
     players.draw(screen)
     platforms.draw(screen)
     enemies.draw(screen)
-
-    if players_alive == 0:
-        disp.set_text("GAMEOVER!")
-
-        players_alive = -1
 
     screen.blit(disp.image, ((400)-(disp.size[0]/2), 10))
 
